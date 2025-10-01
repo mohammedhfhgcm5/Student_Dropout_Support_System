@@ -1,0 +1,187 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//
+// ===== Enums =====
+//
+
+enum Role {
+  ADMIN
+  STAFF
+  FIELD_OFFICER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  DROPOUT
+  GRADUATED
+  TRANSFERRED
+}
+
+enum DonationStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+//
+// ===== Models =====
+//
+
+model User {
+  id             Int            @id @default(autoincrement())
+  fullName       String
+  nationalNumber String         @unique
+  role           Role
+  email          String         @unique
+  password       String
+  activityLogs   ActivityLog[]
+
+  @@map("user")
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  description String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ActivityLog")
+}
+
+model Donor {
+  id             Int        @id @default(autoincrement())
+  name           String
+  email          String     @unique
+  password       String
+  nationalNumber String     @unique
+  donations      Donation[]
+
+  @@map("Donor")
+}
+
+model Donation {
+  id          Int             @id @default(autoincrement())
+  studentId   Int
+  donorId     Int
+  purposeId   Int
+  amount      Float
+  status      DonationStatus
+  student     Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  donor       Donor           @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  purpose     DonationPurpose @relation(fields: [purposeId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+
+  @@map("Donation")
+}
+
+model Location {
+  id       Int       @id @default(autoincrement())
+  name     String
+  region   String
+  students Student[]
+
+  @@map("Location")
+}
+
+model DropoutReason {
+  id       Int       @id @default(autoincrement())
+  name     String
+  region   String     @unique
+  students Student[]
+
+  @@map("DropoutReason")
+}
+
+model DonationPurpose {
+  id        Int        @id @default(autoincrement())
+  name      String
+  donations Donation[]
+
+  @@map("DonationPurpose")
+}
+
+model Guardian {
+  id             Int       @id @default(autoincrement())
+  fullName       String
+  nationalNumber String    @unique
+  phone          String?
+  email          String?
+  relationship   String
+  students       Student[]
+
+  @@map("guardian")
+}
+
+model School {
+  id       Int       @id @default(autoincrement())
+  name     String
+  address  String?
+  region   String?
+  students Student[]
+
+  @@map("school")
+}
+
+model Student {
+  id               Int            @id @default(autoincrement())
+  fullName         String
+  dateOfBirth      DateTime
+  gender           Gender
+  nationalNumber   String         @unique
+  status           StudentStatus
+  mainLanguage     String
+  acquiredLanguage String
+  guardianId       Int?
+  schoolId         Int?
+  locationId       Int?
+  dropoutReasonId  Int?
+  donations        Donation[]
+  followUpVisits   FollowUpVisit[]
+  documents        Document[]
+  location         Location?      @relation(fields: [locationId], references: [id])
+  dropoutReason    DropoutReason? @relation(fields: [dropoutReasonId], references: [id])
+  guardian         Guardian?      @relation(fields: [guardianId], references: [id])
+  school           School?        @relation(fields: [schoolId], references: [id])
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("student")
+}
+
+
+model FollowUpVisit {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  date      DateTime
+  note      String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("FollowUpVisit")
+}
+
+model Document {
+  id        Int    @id @default(autoincrement())
+  studentId Int
+  filePath  String
+  type      String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("Document")
+}
