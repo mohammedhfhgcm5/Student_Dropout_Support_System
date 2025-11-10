@@ -9,19 +9,25 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from "@nestjs/common";
 import { StudentService } from "./student.service";
 import { CreateStudentDto } from "./dto/create-student.dto";
 import { UpdateStudentDto } from "./dto/update-student.dto";
 import { StudentStatus } from "@prisma/client";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { currentUser } from "src/auth/decorator/current.user.decorator";
+import { PayloadDto } from "src/auth/dto/auth.dto";
 
 @Controller("students")
+// @UseGuards(JwtAuthGuard)
+
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
 
   @Post()
-  create(@Body() dto: CreateStudentDto) {
-    return this.studentService.create(dto);
+  create(@Body() dto: CreateStudentDto,@currentUser() user: PayloadDto) {
+    return this.studentService.create(dto , user);
   }
 
   @Get()
@@ -38,13 +44,13 @@ export class StudentController {
   }
 
   @Patch(":id")
-  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateStudentDto) {
-    return this.studentService.update(id, dto);
+  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateStudentDto , @currentUser() user: PayloadDto) {
+    return this.studentService.update(id, dto ,user);
   }
 
   @Delete(":id")
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.studentService.remove(id);
+  remove(@Param("id", ParseIntPipe) id: number, @currentUser() user: PayloadDto) {
+    return this.studentService.remove(id, user);
   }
 
   @Get("search")
@@ -106,27 +112,7 @@ export class StudentController {
     return this.studentService.getDocuments(studentId);
   }
   
-  @Get("count/active")
-  countActive() {
-    return this.studentService.countActive();
-  }
-
-  @Get("count/dropout")
-  countDropout() {
-    return this.studentService.countDropout();
-  }
-
-  @Get("count/graduated")
-  countGraduated() {
-    return this.studentService.countGraduated();
-  }
-
-  @Get("count/transferred")
-  countTransferred() {
-    return this.studentService.countTransferred();
-  }
-
-
+ 
   @Get("count/gender")
   countByGender() {
     return this.studentService.countByGender();

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -14,9 +14,18 @@ import { StudentModule } from './student/student.module';
 import { FollowUpVisitModule } from './follow-up-visit/follow-up-visit.module';
 import { DocumentModule } from './document/document.module';
 import { AuthModule } from './auth/auth.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { NotificationModule } from './notification/notification.module';
+import { SupportProgramModule } from './support-program/support-program.module';
+import { ReportsModule } from './reports/reports.module';
+import { GuardianInteractionModule } from './guardian-interaction/guardian-interaction.module';
+import { MulterModule } from './documentManager/documentManager.module';
+import { DeviceTokensModule } from './device-tokens/device-tokens.module';
+import { FcmModule } from './notification/fcm.module';
+
 
 @Module({
-  imports: [UserModule, ActivityLogModule,AuthModule, DonorModule, DonationModule, LocationModule, DropoutReasonModule, DonationPurposeModule, GuardianModule, SchoolModule, StudentModule, FollowUpVisitModule, DocumentModule],
+  imports: [UserModule, ActivityLogModule,AuthModule,MulterModule,FcmModule,DeviceTokensModule, DonorModule, DonationModule, LocationModule, DropoutReasonModule, DonationPurposeModule, GuardianModule, SchoolModule, StudentModule, FollowUpVisitModule, DocumentModule, DashboardModule, NotificationModule, SupportProgramModule, ReportsModule, GuardianInteractionModule],
   controllers: [AppController],
   providers: [AppService],
 })

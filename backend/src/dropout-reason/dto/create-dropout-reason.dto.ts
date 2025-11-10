@@ -3,9 +3,10 @@ import { IsString } from "class-validator";
 
 export class CreateDropoutReasonDto {
   @IsString()
-  name: string;
-
+  category: string;
   @IsString()
-  region: string;
+  description: string;
+
+
 }
 

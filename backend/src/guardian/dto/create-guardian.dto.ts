@@ -12,10 +12,8 @@ export class CreateGuardianDto {
   @IsString()
   phone?: string;
 
-  @IsOptional()
-  @IsEmail()
-  email?: string;
+
 
   @IsString()
-  relationship: string;
+  relationToStudent: string;
 }

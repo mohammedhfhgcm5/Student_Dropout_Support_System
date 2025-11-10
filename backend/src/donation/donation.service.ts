@@ -3,14 +3,18 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "prisma/prisma.service";
 import { CreateDonationDto } from "./dto/create-donation.dto";
 import { UpdateDonationDto } from "./dto/update-donation.dto";
+import { DonationStatus } from "@prisma/client";
+import { NotificationsService } from "src/notification/notification.service";
 
 @Injectable()
 export class DonationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationsService
+  ) {}
 
-  async create(dto: CreateDonationDto) {
-    return this.prisma.donation.create({ data: dto });
-  }
+  // async create(dto: CreateDonationDto) {
+  //   return this.prisma.donation.create({ data: dto });
+  // }
 
   async findAll(skip = 0, limit = 10) {
     return this.prisma.donation.findMany({
@@ -57,7 +61,51 @@ export class DonationService {
     });
   }
 
+      async simulatePayment(dto: CreateDonationDto) {
+    // 1️⃣ إنشاء سجل التبرع (Pending)
+    const donation = await this.prisma.donation.create({
+      data: {
+        donorId: dto.donorId,
+        studentId: dto.studentId,
+        purposeId: dto.purposeId,
+        amount: dto.amount,
+        currency: dto.currency || 'USD',
+        status: DonationStatus.PENDING,
+        paymentMethod: 'Simulated Card',
+        transactionReference: `SIM-TXN-${Date.now()}`,
+      },
+      include: {
+        donor: true,
+        student: true,
+        purpose: true,
+      },
+    });
 
+    console.log(`💰 New simulated payment started: ${donation.transactionReference}`);
+
+    // 2️⃣ بعد 3 ثوانٍ: تغيير الحالة إلى CONFIRMED
+    setTimeout(async () => {
+      await this.prisma.donation.update({
+        where: { id: donation.id },
+        data: { status: DonationStatus.CONFIRMED },
+      });
+
+      console.log(`✅ Donation #${donation.id} confirmed automatically.`);
+
+      // 3️⃣ (اختياري) إرسال إشعار للمتبرع
+      await this.notificationService.create({
+        donorId: donation.donorId,
+        title: 'Donation Confirmed',
+        message: `Your donation of ${donation.amount} ${donation.currency} has been confirmed.`,
+        type:"DONOR_ALERT"
+      });
+    }, 3000);
+
+    return {
+      message: 'Payment simulated successfully',
+      donation,
+    };
+  }
   
   // التقرير المالي الكلي
   async financialReport() {

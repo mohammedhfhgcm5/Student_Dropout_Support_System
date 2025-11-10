@@ -9,18 +9,24 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from "@nestjs/common";
 import { FollowUpVisitService } from "./follow-up-visit.service";
 import { CreateFollowUpVisitDto } from "./dto/create-follow-up-visit.dto";
 import { UpdateFollowUpVisitDto } from "./dto/update-follow-up-visit.dto";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { currentUser } from "src/auth/decorator/current.user.decorator";
+import { PayloadDto } from "src/auth/dto/auth.dto";
 
 @Controller("follow-up-visits")
+@UseGuards(JwtAuthGuard)
+
 export class FollowUpVisitController {
   constructor(private readonly followUpVisitService: FollowUpVisitService) {}
 
   @Post()
-  create(@Body() dto: CreateFollowUpVisitDto) {
-    return this.followUpVisitService.create(dto);
+  create(@Body() dto: CreateFollowUpVisitDto, @currentUser() user: PayloadDto) {
+    return this.followUpVisitService.create(dto , user);
   }
 
   @Get()
@@ -37,13 +43,13 @@ export class FollowUpVisitController {
   }
 
   @Patch(":id")
-  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateFollowUpVisitDto) {
-    return this.followUpVisitService.update(id, dto);
+  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateFollowUpVisitDto,@currentUser() user: PayloadDto) {
+    return this.followUpVisitService.update(id, dto , user);
   }
 
   @Delete(":id")
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.followUpVisitService.remove(id);
+  remove(@Param("id", ParseIntPipe) id: number, @currentUser() user: PayloadDto) {
+    return this.followUpVisitService.remove(id , user);
   }
 
   @Get("search")

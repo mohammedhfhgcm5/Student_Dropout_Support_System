@@ -1,4 +1,7 @@
-// schema.prisma
+//
+// ========== PRISMA SCHEMA (Final Version) ==========
+//
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,13 +12,13 @@ datasource db {
 }
 
 //
-// ===== Enums =====
+// ===== ENUMS =====
 //
 
 enum Role {
   ADMIN
-  STAFF
-  FIELD_OFFICER
+  NGO_STAFF
+  FIELD_TEAM
 }
 
 enum Gender {
@@ -27,161 +30,324 @@ enum Gender {
 enum StudentStatus {
   ACTIVE
   DROPOUT
-  GRADUATED
-  TRANSFERRED
+  RETURNED
+  AT_RISK
 }
 
 enum DonationStatus {
   PENDING
+  CONFIRMED
+  ALLOCATED
+  USED
+}
+
+enum VisitType {
+  INITIAL
+  REGULAR
+  EMERGENCY
+}
+
+enum InteractionType {
+  INTERVIEW
+  PHONE_CALL
+  HOME_VISIT
+}
+
+enum ProgramStatus {
+  ENROLLED
   COMPLETED
-  REJECTED
+  DROPPED
+}
+
+enum NotificationType {
+  USER_ALERT
+  DONOR_ALERT
 }
 
 //
-// ===== Models =====
+// ===== MODELS =====
 //
 
+//1
 model User {
-  id             Int            @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   fullName       String
-  nationalNumber String         @unique
+  email          String   @unique
+  passwordHash   String
   role           Role
-  email          String         @unique
-  password       String
-  activityLogs   ActivityLog[]
+  organizationId Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  nationalNumber String
 
-  @@map("user")
+  followUpVisits      FollowUpVisit[]
+  activityLogs        ActivityLog[]
+  notifications       Notification[]
+  GuardianInteraction GuardianInteraction[]
+
+  deviceTokens DeviceToken[] // 👈 add this
+
+  @@map("User")
 }
 
-model ActivityLog {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  action    String
-  description String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+//2
+model Guardian {
+  id                Int      @id @default(autoincrement())
+  fullName          String
+  phone             String?
+  relationToStudent String
+  notes             String?
+  createdAt         DateTime @default(now())
+  nationalNumber    String  @unique 
 
-  @@map("ActivityLog")
+  students     Student[]
+  interactions GuardianInteraction[]
+
+  @@map("Guardian")
 }
 
-model Donor {
-  id             Int        @id @default(autoincrement())
-  name           String
-  email          String     @unique
-  password       String
-  nationalNumber String     @unique
-  donations      Donation[]
+//3
+model School {
+  id          Int     @id @default(autoincrement())
+  name        String
+  region      String
+  address     String?
+  locationId  Int?
+  capacity    Int?
+  contactInfo String?
 
-  @@map("Donor")
+  location Location? @relation(fields: [locationId], references: [id])
+  students Student[]
+
+  @@map("School")
 }
 
-model Donation {
-  id          Int             @id @default(autoincrement())
-  studentId   Int
-  donorId     Int
-  purposeId   Int
-  amount      Float
-  status      DonationStatus
-  student     Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  donor       Donor           @relation(fields: [donorId], references: [id], onDelete: Cascade)
-  purpose     DonationPurpose @relation(fields: [purposeId], references: [id], onDelete: Cascade)
-  createdAt        DateTime       @default(now())
-
-  @@map("Donation")
-}
-
+//4
 model Location {
   id       Int       @id @default(autoincrement())
   name     String
   region   String
   students Student[]
+  schools  School[]
 
   @@map("Location")
 }
 
-model DropoutReason {
-  id       Int       @id @default(autoincrement())
-  name     String
-  region   String     @unique
-  students Student[]
+//5
+model Donor {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique()
+  passwordHash   String
+  nationalNumber String
+  phone          String?
+  isAnonymous    Boolean  @default(false)
+  verified         Boolean   @default(false)
+  verificationToken String?  // لحفظ رمز التحقق مؤقتًا
+  createdAt      DateTime @default(now())
+  donations     Donation[]
+  notifications Notification[] // 👈 add this
+  deviceTokens  DeviceToken[] // 👈 add this
 
-  @@map("DropoutReason")
+  @@map("Donor")
 }
 
+//6
 model DonationPurpose {
-  id        Int        @id @default(autoincrement())
-  name      String
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
   donations Donation[]
 
   @@map("DonationPurpose")
 }
 
-model Guardian {
-  id             Int       @id @default(autoincrement())
-  fullName       String
-  nationalNumber String    @unique
-  phone          String?
-  email          String?
-  relationship   String
-  students       Student[]
+//7
+model Donation {
+  id                   Int            @id @default(autoincrement())
+  donorId              Int
+  studentId            Int?
+  purposeId            Int
+  amount               Float
+  currency             String         @default("USD")
+  status               DonationStatus
+  paymentMethod        String?
+  transactionReference String?
+  donationDate         DateTime       @default(now())
+  createdAt            DateTime       @default(now())
 
-  @@map("guardian")
+  donor   Donor           @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  student Student?        @relation(fields: [studentId], references: [id])
+  purpose DonationPurpose @relation(fields: [purposeId], references: [id])
+
+  @@map("Donation")
 }
 
-model School {
-  id       Int       @id @default(autoincrement())
-  name     String
-  address  String?
-  region   String?
+//9
+model DropoutReason {
+  id          Int    @id @default(autoincrement())
+  description String
+  category    String
+
   students Student[]
 
-  @@map("school")
+  @@map("DropoutReason")
 }
 
+//10
 model Student {
-  id               Int            @id @default(autoincrement())
+  id               Int           @id @default(autoincrement())
   fullName         String
   dateOfBirth      DateTime
   gender           Gender
-  nationalNumber   String         @unique
   status           StudentStatus
+  nationalNumber   String        @unique()
   mainLanguage     String
-  acquiredLanguage String
+  acquiredLanguage String?
+  supportNeeds     String?
   guardianId       Int?
   schoolId         Int?
   locationId       Int?
   dropoutReasonId  Int?
-  donations        Donation[]
-  followUpVisits   FollowUpVisit[]
-  documents        Document[]
-  location         Location?      @relation(fields: [locationId], references: [id])
-  dropoutReason    DropoutReason? @relation(fields: [dropoutReasonId], references: [id])
-  guardian         Guardian?      @relation(fields: [guardianId], references: [id])
-  school           School?        @relation(fields: [schoolId], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  guardian      Guardian?      @relation(fields: [guardianId], references: [id])
+  school        School?        @relation(fields: [schoolId], references: [id])
+  location      Location?      @relation(fields: [locationId], references: [id])
+  dropoutReason DropoutReason? @relation(fields: [dropoutReasonId], references: [id])
 
-  @@map("student")
+  donations       Donation[]
+  followUpVisits  FollowUpVisit[]
+  documents       Document[]
+  interactions    GuardianInteraction[]
+  studentPrograms StudentProgram[]
+
+  @@map("Student")
 }
 
-
+//11
 model FollowUpVisit {
-  id        Int      @id @default(autoincrement())
-  studentId Int
-  date      DateTime
-  note      String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                      Int       @id @default(autoincrement())
+  studentId               Int
+  userId                  Int
+  visitDate               DateTime
+  visitType               VisitType
+  notes                   String?
+  guardianPresent         Boolean   @default(false)
+  studentStatusAssessment String?
+  recommendations         String?
+  createdAt               DateTime  @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("FollowUpVisit")
 }
 
+//12
+model GuardianInteraction {
+  id              Int             @id @default(autoincrement())
+  studentId       Int
+  guardianId      Int
+  userId          Int
+  interactionType InteractionType
+  date            DateTime
+  notes           String?
+  createdAt       DateTime        @default(now())
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("GuardianInteraction")
+}
+
+//13
 model Document {
-  id        Int    @id @default(autoincrement())
-  studentId Int
-  filePath  String
-  type      String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  filePath   String
+  fileType   String
+  uploadDate DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("Document")
+}
+
+//14
+model SupportProgram {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  duration    String? // يمكن جعله Int إذا تريد بالأيام
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  studentPrograms StudentProgram[]
+
+  @@map("SupportProgram")
+}
+
+//15
+model StudentProgram {
+  id              Int           @id @default(autoincrement())
+  student_id      Int
+  program_id      Int
+  enrollment_date DateTime      @default(now())
+  status          ProgramStatus @default(ENROLLED)
+  completion_date DateTime?
+
+  student Student        @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  program SupportProgram @relation(fields: [program_id], references: [id], onDelete: Cascade)
+
+  @@map("StudentProgram")
+}
+
+//16
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  action      String
+  description String?
+  timestamp   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now())
+
+  @@map("ActivityLog")
+}
+
+//17
+model Notification {
+  id         Int              @id @default(autoincrement())
+  userId     Int?
+  donorId    Int?
+  type       NotificationType
+  title      String
+  message    String
+  link       String?
+  is_read    Boolean          @default(false)
+  created_at DateTime         @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  donor Donor? @relation(fields: [donorId], references: [id], onDelete: Cascade)
+
+  @@map("Notification")
+}
+//18
+model DeviceToken {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  donorId    Int?
+  token      String   @unique
+  deviceType String? // e.g., "ANDROID", "IOS", "WEB"
+  createdAt  DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  donor Donor? @relation(fields: [donorId], references: [id], onDelete: Cascade)
+
+  @@map("DeviceToken")
 }

@@ -1,20 +1,20 @@
-// src/donation/dto/create-donation.dto.ts
-import { IsInt, IsEnum, IsNumber } from "class-validator";
-import { DonationStatus } from "@prisma/client";
+import { IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateDonationDto {
-  @IsInt()
-  studentId: number;
-
   @IsInt()
   donorId: number;
 
   @IsInt()
   purposeId: number;
 
+  @IsOptional()
+  @IsInt()
+  studentId?: number;
+
   @IsNumber()
   amount: number;
 
-  @IsEnum(DonationStatus)
-  status: DonationStatus;
+  @IsOptional()
+  @IsString()
+  currency?: string;
 }

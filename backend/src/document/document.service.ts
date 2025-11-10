@@ -46,7 +46,7 @@ export class DocumentService {
     return this.prisma.document.findMany({
       where: {
         OR: [
-          { type: { contains: query, mode: "insensitive" } },
+          { fileType: { contains: query, mode: "insensitive" } },
           { filePath: { contains: query, mode: "insensitive" } },
           { student: { fullName: { contains: query, mode: "insensitive" } } },
         ],

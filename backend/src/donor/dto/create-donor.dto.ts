@@ -1,5 +1,5 @@
 // src/donor/dto/create-donor.dto.ts
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsString, MinLength } from "class-validator";
 
 export class CreateDonorDto {
   @IsString()
@@ -10,8 +10,19 @@ export class CreateDonorDto {
 
   @IsString()
   @MinLength(6)
-  password: string;
+  passwordHash: string;
 
   @IsString()
   nationalNumber: string;
+  @IsString()
+  phone: string;
+  @IsString()
+  verificationToken?: string;
+
+  @IsBoolean()
+  verified?: boolean
+
+
+
+  
 }

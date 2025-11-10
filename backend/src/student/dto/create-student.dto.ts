@@ -23,6 +23,8 @@ export class CreateStudentDto {
 
   @IsString()
   acquiredLanguage: string;
+  @IsString()
+  supportNeeds?: string;
 
   @IsOptional()
   @IsInt()

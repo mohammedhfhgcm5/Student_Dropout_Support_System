@@ -18,10 +18,7 @@ import { UpdateDonationDto } from "./dto/update-donation.dto";
 export class DonationController {
   constructor(private readonly donationService: DonationService) {}
 
-  @Post()
-  create(@Body() dto: CreateDonationDto) {
-    return this.donationService.create(dto);
-  }
+  
 
   @Get()
   findAll(
@@ -29,6 +26,10 @@ export class DonationController {
     @Query("limit", ParseIntPipe) limit = 10,
   ) {
     return this.donationService.findAll(skip, limit);
+  }
+  @Post('simulate-payment')
+  async simulatePayment(@Body() dto: CreateDonationDto) {
+    return this.donationService.simulatePayment(dto);
   }
 
   @Get(":id")

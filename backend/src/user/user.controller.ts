@@ -38,7 +38,7 @@ export class UserController {
   
   @Get(':id/activity-logs')
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.ADMIN, Role.STAFF)
+  @Roles(Role.ADMIN, Role.NGO_STAFF)
   findActivityLogs(@Param('id') id: string) {
     return this.service.findActivityLogs(+id);
   }

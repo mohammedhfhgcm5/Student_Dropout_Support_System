@@ -4,14 +4,54 @@ import { PrismaService } from "prisma/prisma.service";
 import { CreateStudentDto } from "./dto/create-student.dto";
 import { UpdateStudentDto } from "./dto/update-student.dto";
 import { Gender, StudentStatus } from "@prisma/client";
+import { ActivityLogService } from "src/activity-log/activity-log.service";
+import { PayloadDto } from "src/auth/dto/auth.dto";
 
 @Injectable()
 export class StudentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService,
+         private activityLogService: ActivityLogService,
+    
+  ) {}
 
-  async create(dto: CreateStudentDto) {
-    return this.prisma.student.create({ data: dto });
+async create(dto: CreateStudentDto, user: PayloadDto) {
+  try {
+    const student = await this.prisma.student.create({
+      data: {
+        fullName: dto.fullName,
+        nationalNumber: dto.nationalNumber,
+        gender: dto.gender,
+        status: dto.status,
+        mainLanguage: dto.mainLanguage,
+        acquiredLanguage: dto.acquiredLanguage ?? null,
+        dateOfBirth: new Date(dto.dateOfBirth), // ✅ convert string → Date
+        guardianId: dto.guardianId, // ✅ required relation
+        supportNeeds: dto.supportNeeds ?? null,
+        schoolId: dto.schoolId ?? null,
+        locationId: dto.locationId ?? null,
+        dropoutReasonId: dto.dropoutReasonId ?? null,
+      },
+      include: {
+        guardian: true, // optional, but nice for frontend
+      },
+    });
+
+    // Optional: log the action (recommended for audit)
+    await this.prisma.activityLog.create({
+      data: {
+        userId: user.id!,
+        action: "CREATE_STUDENT",
+        description: `Student "${student.fullName}" created by ${user.email}`,
+      },
+    });
+
+    return student;
+  } catch (error) {
+    console.error("❌ Error creating student:", error);
+    throw new Error("Failed to create student. Please check your data.");
   }
+}
+
 
   async findAll(skip = 0, limit = 50) {
     return this.prisma.student.findMany({
@@ -48,15 +88,35 @@ export class StudentService {
     return student;
   }
 
-  async update(id: number, dto: UpdateStudentDto) {
-    return this.prisma.student.update({
+  async update(id: number, dto: UpdateStudentDto, user:PayloadDto ) {
+    const update = this.prisma.student.update({
       where: { id },
       data: dto,
     });
+
+
+     await this.activityLogService.create({
+        userId: user.id,
+        action: 'Update Student',
+        description: `User ${user.fullName} his email ${user.email}  Update student  id ${id}`,
+      } as any); 
+
+      return update;
+
   }
 
-  async remove(id: number) {
-    return this.prisma.student.delete({ where: { id } });
+  async remove(id: number ,user:PayloadDto) {
+    const Delete  =  this.prisma.student.delete({ where: { id } });
+
+
+     await this.activityLogService.create({
+        userId: user.id,
+        action: 'Delete Student',
+        description: `User ${user.fullName} his email ${user.email}  Delete student id ${id}`,
+      } as any); 
+
+      return Delete;
+
   }
 
   async search(query: string, skip = 0, limit = 20) {
@@ -171,12 +231,9 @@ export class StudentService {
     return this.countByStatus(StudentStatus.DROPOUT);
   }
 
-  async countGraduated() {
-    return this.countByStatus(StudentStatus.GRADUATED);
-  }
-
+  
   async countTransferred() {
-    return this.countByStatus(StudentStatus.TRANSFERRED);
+    return this.countByStatus(StudentStatus.RETURNED);
   }
 
 
@@ -232,7 +289,6 @@ async impactReport() {
   const totalStudents = await this.countAll();
   const active = await this.countActive();
   const dropout = await this.countDropout();
-  const graduated = await this.countGraduated();
   const transferred = await this.countTransferred();
   const genderDist = await this.countByGender();
   const ageDist = await this.ageDistribution();
@@ -245,7 +301,7 @@ async impactReport() {
     totalStudents,
     active,
     dropout,
-    graduated,
+  
     transferred,
     genderDist,
     ageDist,
@@ -307,14 +363,14 @@ async impactReport() {
   // الطلاب الذين أصبحوا GRADUATED خلال الشهر
   const graduated = await this.prisma.student.count({
     where: {
-      status: StudentStatus.GRADUATED,
+      status: StudentStatus.RETURNED,
       updatedAt: { gte: start, lt: end },
     },
   });
 
   // زيارات المتابعة خلال الشهر
   const followUpVisits = await this.prisma.followUpVisit.count({
-    where: { date: { gte: start, lt: end } },
+    where: { createdAt: { gte: start, lt: end } },
   });
 
   // التبرعات خلال الشهر
@@ -346,8 +402,8 @@ async impactReport() {
       const total = loc.students.length;
       const active = loc.students.filter(s => s.status === StudentStatus.ACTIVE).length;
       const dropout = loc.students.filter(s => s.status === StudentStatus.DROPOUT).length;
-      const graduated = loc.students.filter(s => s.status === StudentStatus.GRADUATED).length;
-      const transferred = loc.students.filter(s => s.status === StudentStatus.TRANSFERRED).length;
+      const AT_RISK = loc.students.filter(s => s.status === StudentStatus.AT_RISK).length;
+      const RETURNED = loc.students.filter(s => s.status === StudentStatus.RETURNED).length;
 
       return {
         locationId: loc.id,
@@ -356,8 +412,8 @@ async impactReport() {
         totalStudents: total,
         active,
         dropout,
-        graduated,
-        transferred,
+        AT_RISK,
+        RETURNED,
       };
     });
 
@@ -383,8 +439,8 @@ async impactReport() {
 
       return {
         reasonId: r.id,
-        reasonName: r.name,
-        region: r.region,
+        reasonName: r.category,
+       
         dropoutCount: count,
         percentage,
       };

@@ -1,267 +1,178 @@
-// import { PrismaClient } from '@prisma/client'
-// //npx tsx prisma/seed.ts
-// const prisma = new PrismaClient()
+import { PrismaClient, Role, Gender, StudentStatus, DonationStatus, VisitType, InteractionType } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
-// const syrianLocations = [
-//   // Aleppo Governorate
-//   { name: "Aleppo", region: "Mount Simeon District" },
-//   { name: "Aleppo", region: "Al-Bab District" },
-//   { name: "Aleppo", region: "Afrin District" },
-//   { name: "Aleppo", region: "Azaz District" },
-//   { name: "Aleppo", region: "Manbij District" },
-//   { name: "Aleppo", region: "Ayn Al-Arab District" },
-//   { name: "Aleppo", region: "As-Safira District" },
-//   { name: "Aleppo", region: "Jarabulus District" },
-//   { name: "Aleppo", region: "Atarib District" },
-//   { name: "Aleppo", region: "Dayr Hafir District" },
-  
-//   // Damascus Governorate
-//   { name: "Damascus", region: "Damascus" },
-//   { name: "Damascus", region: "Al-Midan" },
-//   { name: "Damascus", region: "Al-Qadam" },
-//   { name: "Damascus", region: "Al-Qassa'a" },
-//   { name: "Damascus", region: "Al-Mazzah" },
-//   { name: "Damascus", region: "Kafr Sousa" },
-  
-//   // Rif Dimashq Governorate
-//   { name: "Rif Dimashq", region: "Douma District" },
-//   { name: "Rif Dimashq", region: "Rif Dimashq District" },
-//   { name: "Rif Dimashq", region: "Darayya District" },
-//   { name: "Rif Dimashq", region: "Al-Tall District" },
-//   { name: "Rif Dimashq", region: "Yabroud District" },
-//   { name: "Rif Dimashq", region: "Al-Zabadani District" },
-//   { name: "Rif Dimashq", region: "An-Nabk District" },
-//   { name: "Rif Dimashq", region: "Qudsaya District" },
-//   { name: "Rif Dimashq", region: "Al-Qutayfah District" },
-//   { name: "Rif Dimashq", region: "Qatana District" },
-  
-//   // Homs Governorate
-//   { name: "Homs", region: "Homs District" },
-//   { name: "Homs", region: "Al-Rastan District" },
-//   { name: "Homs", region: "Palmyra District" },
-//   { name: "Homs", region: "Al-Mukharram District" },
-//   { name: "Homs", region: "Al-Qusayr District" },
-//   { name: "Homs", region: "Talkalakh District" },
-  
-//   // Hama Governorate
-//   { name: "Hama", region: "Hama District" },
-//   { name: "Hama", region: "Masyaf District" },
-//   { name: "Hama", region: "Al-Suqaylabiyah District" },
-//   { name: "Hama", region: "Mhardeh District" },
-//   { name: "Hama", region: "Salamiyah District" },
-  
-//   // Latakia Governorate
-//   { name: "Latakia", region: "Latakia District" },
-//   { name: "Latakia", region: "Jableh District" },
-//   { name: "Latakia", region: "Al-Qardaha District" },
-//   { name: "Latakia", region: "Al-Haffah District" },
-//   { name: "Latakia", region: "Slanfeh District" },
-  
-//   // Tartus Governorate
-//   { name: "Tartus", region: "Tartus District" },
-//   { name: "Tartus", region: "Baniyas District" },
-//   { name: "Tartus", region: "Sheikh Badr District" },
-//   { name: "Tartus", region: "Dreikish District" },
-//   { name: "Tartus", region: "Safita District" },
-  
-//   // Idlib Governorate
-//   { name: "Idlib", region: "Idlib District" },
-//   { name: "Idlib", region: "Ariha District" },
-//   { name: "Idlib", region: "Maarrat al-Numan District" },
-//   { name: "Idlib", region: "Harem District" },
-//   { name: "Idlib", region: "Jisr al-Shughur District" },
-  
-//   // Al-Hasakah Governorate
-//   { name: "Al-Hasakah", region: "Al-Hasakah District" },
-//   { name: "Al-Hasakah", region: "Qamishli District" },
-//   { name: "Al-Hasakah", region: "Al-Malikiyah District" },
-//   { name: "Al-Hasakah", region: "Ras al-Ayn District" },
-//   { name: "Al-Hasakah", region: "Amuda District" },
-  
-//   // Deir ez-Zor Governorate
-//   { name: "Deir ez-Zor", region: "Deir ez-Zor District" },
-//   { name: "Deir ez-Zor", region: "Al-Mayadin District" },
-//   { name: "Deir ez-Zor", region: "Al-Bukamal District" },
-
-//   // Raqqa Governorate
-//   { name: "Raqqa", region: "Raqqa District" },
-//   { name: "Raqqa", region: "Al-Thawra District" },
-//   { name: "Raqqa", region: "Tal Abyad District" },
-  
-//   // As-Suwayda Governorate
-//   { name: "As-Suwayda", region: "As-Suwayda District" },
-//   { name: "As-Suwayda", region: "Salkhad District" },
-//   { name: "As-Suwayda", region: "Shahba District" },
-  
-//   // Daraa Governorate
-//   { name: "Daraa", region: "Daraa District" },
-//   { name: "Daraa", region: "Izra' District" },
-//   { name: "Daraa", region: "Al-Sanamayn District" },
-//   { name: "Daraa", region: "Da'el District" },
-//   { name: "Daraa", region: "Al-Sheikh Maskin District" },
-  
-//   // Quneitra Governorate
-//   { name: "Quneitra", region: "Quneitra District" },
-//   { name: "Quneitra", region: "Fiq District" },
-// ];
-
-// async function main() {
-//   console.log('Start seeding...')
-  
-//   // Delete existing locations
-//   await prisma.location.deleteMany()
-//   console.log('Deleted existing locations')
-  
-//   // Create new locations
-//   for (const location of syrianLocations) {
-//     const createdLocation = await prisma.location.create({
-//       data: location
-//     })
-//     console.log(`Created location: ${createdLocation.name} - ${createdLocation.region}`)
-//   }
-  
-//   console.log('Seeding finished!')
-// }
-
-// main()
-//   .catch((e) => {
-//     console.error(e)
-//     process.exit(1)
-//   })
-//   .finally(async () => {
-//     await prisma.$disconnect()
-//   })
-
-
-
-import { PrismaClient, StudentStatus, Gender, DonationStatus } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // ---------- Schools ----------
-  const schools:any = [];
-  for (let i = 1; i <= 5; i++) {
-    const school = await prisma.school.create({
-      data: { name: `School ${i}`,  region: `Region ${i}` },
-    });
-    schools.push(school);
-  }
+  console.log('🌱 Starting database seeding...');
 
-  // ---------- Locations ----------
-  const locations:any = [];
-  for (let i = 1; i <= 5; i++) {
-    const loc = await prisma.location.create({
-      data: { name: `Location ${i}`, region: `Region ${i}` },
-    });
-    locations.push(loc);
-  }
+  // ========== 1️⃣ إنشاء مستخدم إداري (Admin) ==========
+  const adminEmail = 'admin@student-support.com';
+  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
-  // ---------- DropoutReasons ----------
-  const reasons :any = [];
-  const reasonNames = ["Financial", "Health", "Relocation", "Family", "Other"];
-  for (let i = 0; i < reasonNames.length; i++) {
-    const reason = await prisma.dropoutReason.create({
-      data: { name: reasonNames[i], region: `Region ${i + 1}` },
-    });
-    reasons.push(reason);
-  }
-
-  // ---------- Guardians ----------
-  const guardians :any = [];
-  for (let i = 1; i <= 10; i++) {
-    const g = await prisma.guardian.create({
+  if (!existingAdmin) {
+    const passwordHash = await bcrypt.hash('Admin@123', 10);
+    await prisma.user.create({
       data: {
-        fullName: `Guardian ${i}`,
-        nationalNumber: `G${1000 + i}`,
-        phone: `12345${i}`,
-        email: `guardian${i}@mail.com`,
-        relationship: i % 2 === 0 ? "Mother" : "Father",
+        fullName: 'System Administrator',
+        email: adminEmail,
+        passwordHash,
+        role: Role.ADMIN,
+        nationalNumber: '1000000000',
       },
     });
-    guardians.push(g);
+    console.log('✅ Admin user created');
+  } else {
+    console.log('ℹ️ Admin already exists');
   }
 
-  // ---------- Donors ----------
-  const donors :any = [];
-  for (let i = 1; i <= 10; i++) {
-    const donor = await prisma.donor.create({
+  // ========== 2️⃣ إنشاء Donor (متبرع) تجريبي ==========
+  const donorEmail = 'donor@example.com';
+  const existingDonor = await prisma.donor.findUnique({ where: { email: donorEmail } });
+
+  if (!existingDonor) {
+    const passwordHash = await bcrypt.hash('Donor@123', 10);
+    await prisma.donor.create({
       data: {
-        name: `Donor ${i}`,
-        email: `donor${i}@mail.com`,
-        password: `pass${i}`,
-        nationalNumber: `D${1000 + i}`,
+        name: 'John Donor',
+        email: donorEmail,
+        passwordHash,
+        nationalNumber: '2222222222',
+        phone: '+963999999999',
+        verified: true,
       },
     });
-    donors.push(donor);
+    console.log('✅ Test donor created');
+  } else {
+    console.log('ℹ️ Donor already exists');
   }
 
-  // ---------- DonationPurposes ----------
-  const purposes:any = [];
-  const purposeNames = ["Scholarship", "Books", "Uniform", "Transport"];
-  for (let i = 0; i < purposeNames.length; i++) {
-    const purpose = await prisma.donationPurpose.create({ data: { name: purposeNames[i] } });
-    purposes.push(purpose);
-  }
+  // ========== 3️⃣ إضافة Guardian ==========
+  const guardian = await prisma.guardian.upsert({
+    where: { nationalNumber: '3333333333' },
+    update: {},
+    create: {
+      fullName: 'Mohammed Al-Hassan',
+      nationalNumber: '3333333333',
+      phone: '+963998887766',
+      relationToStudent: 'Father',
+    },
+  });
+  console.log('✅ Guardian created');
 
-  // ---------- Students ----------
-  const students:any = [];
-  for (let i = 1; i <= 50; i++) {
-    const student = await prisma.student.create({
-      data: {
-        fullName: `Student ${i}`,
-        dateOfBirth: new Date(2010 + (i % 5), i % 12, i % 28 + 1),
-        gender: i % 2 === 0 ? Gender.FEMALE : Gender.MALE,
-        status: Object.values(StudentStatus)[i % 4] as StudentStatus,
-        mainLanguage: "Arabic",
-        acquiredLanguage: "English",
-        guardianId: guardians[i % guardians.length].id,
-        schoolId: schools[i % schools.length].id,
-        locationId: locations[i % locations.length].id,
-        dropoutReasonId: reasons[i % reasons.length].id,
-        nationalNumber: `${i}*10`,
-      },
-    });
-    students.push(student);
-  }
+  // ========== 4️⃣ إنشاء موقع ومدرسة ==========
+  const location = await prisma.location.create({
+    data: {
+      name: 'Aleppo',
+      region: 'North',
+    },
+  });
 
-  // ---------- Donations ----------
-  for (let i = 0; i < 100; i++) {
+  const school = await prisma.school.create({
+    data: {
+      name: 'Al Amal Primary School',
+      region: 'Aleppo North',
+      address: 'Main Street',
+      capacity: 500,
+      contactInfo: '+963987654321',
+      locationId: location.id,
+    },
+  });
+  console.log('✅ School and location created');
+
+  // ========== 5️⃣ إنشاء طالب ==========
+  const student = await prisma.student.create({
+    data: {
+      fullName: 'Ahmad Khaled',
+      dateOfBirth: new Date('2012-05-10'),
+      gender: Gender.MALE,
+      status: StudentStatus.ACTIVE,
+      nationalNumber: '5555555555',
+      mainLanguage: 'Arabic',
+      guardianId: guardian.id,
+      schoolId: school.id,
+      locationId: location.id,
+    },
+  });
+  console.log('✅ Student created');
+
+  // ========== 6️⃣ إنشاء هدف تبرع ==========
+  const purpose = await prisma.donationPurpose.create({
+    data: {
+      name: 'School Supplies',
+      description: 'Providing school bags and stationery',
+    },
+  });
+  console.log('✅ Donation purpose created');
+
+  // ========== 7️⃣ إنشاء تبرع ==========
+  const donor = await prisma.donor.findUnique({ where: { email: donorEmail } });
+  if (donor) {
     await prisma.donation.create({
       data: {
-        studentId: students[i % students.length].id,
-        donorId: donors[i % donors.length].id,
-        purposeId: purposes[i % purposes.length].id,
-        amount: Math.floor(Math.random() * 1000) + 50,
-        status: DonationStatus.COMPLETED,
+        donorId: donor.id,
+        studentId: student.id,
+        purposeId: purpose.id,
+        amount: 100.0,
+        currency: 'USD',
+        status: DonationStatus.CONFIRMED,
+        paymentMethod: 'IMAGINARY_PAYMENT',
+        transactionReference: 'TXN123456',
       },
     });
+    console.log('✅ Donation created');
   }
 
-  // ---------- FollowUpVisits ----------
-  for (let i = 0; i < 50; i++) {
+  // ========== 8️⃣ إنشاء زيارة متابعة ==========
+  const user = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (user) {
     await prisma.followUpVisit.create({
       data: {
-        studentId: students[i % students.length].id,
-        date: new Date(2025, i % 12, (i % 28) + 1),
-        note: `Follow-up visit ${i + 1}`,
+        studentId: student.id,
+        userId: user.id,
+        visitDate: new Date(),
+        visitType: VisitType.REGULAR,
+        notes: 'Student is progressing well',
+        studentStatusAssessment: 'Stable',
+        recommendations: 'Continue current support',
       },
     });
+    console.log('✅ Follow-up visit created');
   }
 
-  // ---------- Documents ----------
-  for (let i = 0; i < 50; i++) {
-    await prisma.document.create({
-      data: {
-        studentId: students[i % students.length].id,
-        filePath: `/uploads/doc${i + 1}.pdf`,
-        type: i % 2 === 0 ? "ID" : "Report Card",
-      },
-    });
-  }
+  // ========== 9️⃣ إنشاء تفاعل ولي أمر ==========
+  await prisma.guardianInteraction.create({
+    data: {
+      studentId: student.id,
+      guardianId: guardian.id,
+      userId: user?.id || 1,
+      interactionType: InteractionType.PHONE_CALL,
+      date: new Date(),
+      notes: 'Discussed attendance improvement',
+    },
+  });
+  console.log('✅ Guardian interaction created');
 
-  console.log("✅ All seed data created!");
+  // ========== 🔟 إنشاء إشعار ==========
+  await prisma.notification.create({
+    data: {
+      donorId: donor?.id,
+      type: 'DONOR_ALERT',
+      title: 'Thank You for Your Donation!',
+      message: 'Your support has helped a student continue studying.',
+      link: 'https://student-support.org/donations',
+    },
+  });
+  console.log('✅ Notification created');
+
+  console.log('🌱 Seeding completed successfully!');
 }
 
 main()
-  .catch(e => console.error(e))
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

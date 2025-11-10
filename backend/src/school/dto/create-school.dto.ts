@@ -11,5 +11,5 @@ export class CreateSchoolDto {
 
   @IsOptional()
   @IsString()
-  region?: string;
+  region: string;
 }

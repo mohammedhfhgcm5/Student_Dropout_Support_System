@@ -1,7 +1,6 @@
-import { IsArray, IsBoolean, IsEmail, IsIn, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString } from 'class-validator';
 
 export class AuthDto {
-  @IsString()
   @IsEmail()
   email: string;
 
@@ -10,10 +9,8 @@ export class AuthDto {
 }
 
 export class PayloadDto {
-
-  @IsString()
-  @IsMongoId()
-  id:number;
+  @IsOptional()
+  id?: number; // ✅ PostgreSQL يستخدم number وليس MongoId
 
   @IsOptional()
   @IsString()
@@ -24,26 +21,12 @@ export class PayloadDto {
   email?: string;
 
   @IsOptional()
-  @IsEmail()
+  @IsString()
   nationalNumber?: string;
 
   @IsOptional()
-  password?: string;
-
-  @IsOptional()
-  @IsIn(['FIELD_OFFICER', 'STAFF', 'ADMIN'])
-  role?: 'FIELD_OFFICER' | 'STAFF' | 'ADMIN';
-
-  @IsBoolean()
-  approved?: boolean;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  Preferences?: string[];
-
-  @IsString()
-  Permission?: string[];
+  @IsIn(['FIELD_TEAM', 'NGO_STAFF', 'ADMIN', 'DONOR'])
+  role?: 'FIELD_TEAM' | 'NGO_STAFF' | 'ADMIN' | 'DONOR';
 }
 
 export class ForgotPasswordDto {

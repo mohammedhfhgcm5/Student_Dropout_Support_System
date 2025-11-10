@@ -23,7 +23,7 @@ export class UserService {
           nationalNumber: createDto.nationalNumber,
           role: createDto.role,
           email: createDto.email,
-          password: createDto.password,
+          passwordHash: createDto.password,
         },
       });
 
@@ -67,8 +67,8 @@ export class UserService {
         role: true,
         email: true,
         activityLogs: {
-          select: { id: true, action: true, createdAt: true ,description: true,},
-          orderBy: { createdAt: 'desc' },
+          select: { id: true, action: true, created_at: true ,description: true,},
+          orderBy: { created_at: 'desc' },
         },
       },
     });
@@ -84,8 +84,8 @@ export class UserService {
         role: true,
         email: true,
         activityLogs: {
-          select: { id: true, action: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
+          select: { id: true, action: true, created_at: true },
+          orderBy: { created_at: 'desc' },
         },
       },
     });
@@ -112,11 +112,30 @@ export class UserService {
         },
       });
 
-      await this.activityLogService.create({
-        userId: id,
-        action: 'UPDATE_USER',
-        description: `Updated user ${updated.email}`,
-      } as any);
+       const changes: string[] = [];
+    for (const key of Object.keys(dto)) {
+      // نتجنب الحقول الحساسة
+      if (key === 'password') {
+        changes.push(`${key}: [HIDDEN]`);
+        continue;
+      }
+   
+      const newVal = (updated as any)[key];
+      
+        changes.push(`${key}:  ➝ '${newVal} `);
+    }
+
+    const description = changes.length
+      ? `Updated user ${updated.email}. Changes: ${changes.join(', ')}`
+      : `Updated user ${updated.email}, but no values changed`;
+
+    // ✅ سجل النشاط
+    await this.activityLogService.create({
+      userId: id,
+      action: 'UPDATE_USER',
+      description,
+    } as any);
+
 
       return updated;
     } catch (e: any) {
@@ -161,7 +180,7 @@ export class UserService {
    async findActivityLogs(userId: number) {
     return this.prisma.activityLog.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
   }
 }

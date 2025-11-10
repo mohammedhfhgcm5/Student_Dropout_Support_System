@@ -9,6 +9,6 @@ export class CreateDocumentDto {
   filePath: string;
 
   @IsString()
-  type: string;
+  fileType: string;
 }
 

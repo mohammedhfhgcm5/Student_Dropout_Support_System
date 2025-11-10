@@ -22,7 +22,7 @@ export class ActivityLogService {
 
   async findAll() {
     return this.prisma.activityLog.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       include: {
         user: {
           select: { id: true, fullName: true, email: true },
@@ -34,7 +34,7 @@ export class ActivityLogService {
   async findByUser(userId: number) {
     return this.prisma.activityLog.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
   }
 }
