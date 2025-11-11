@@ -1,4 +1,12 @@
-import { PrismaClient, Role, Gender, StudentStatus, DonationStatus, VisitType, InteractionType } from '@prisma/client';
+import {
+  PrismaClient,
+  Role,
+  Gender,
+  StudentStatus,
+  DonationStatus,
+  VisitType,
+  InteractionType,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -8,7 +16,9 @@ async function main() {
 
   // ========== 1️⃣ إنشاء مستخدم إداري (Admin) ==========
   const adminEmail = 'admin@student-support.com';
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
 
   if (!existingAdmin) {
     const passwordHash = await bcrypt.hash('Admin@123', 10);
@@ -28,7 +38,9 @@ async function main() {
 
   // ========== 2️⃣ إنشاء Donor (متبرع) تجريبي ==========
   const donorEmail = 'donor@example.com';
-  const existingDonor = await prisma.donor.findUnique({ where: { email: donorEmail } });
+  const existingDonor = await prisma.donor.findUnique({
+    where: { email: donorEmail },
+  });
 
   if (!existingDonor) {
     const passwordHash = await bcrypt.hash('Donor@123', 10);
@@ -81,20 +93,31 @@ async function main() {
   console.log('✅ School and location created');
 
   // ========== 5️⃣ إنشاء طالب ==========
-  const student = await prisma.student.create({
-    data: {
-      fullName: 'Ahmad Khaled',
-      dateOfBirth: new Date('2012-05-10'),
-      gender: Gender.MALE,
-      status: StudentStatus.ACTIVE,
-      nationalNumber: '5555555555',
-      mainLanguage: 'Arabic',
-      guardianId: guardian.id,
-      schoolId: school.id,
-      locationId: location.id,
-    },
+  const existingStudent = await prisma.student.findUnique({
+    where: { nationalNumber: '5555555555' },
   });
-  console.log('✅ Student created');
+
+  let student;
+
+  if (!existingStudent) {
+    student = await prisma.student.create({
+      data: {
+        fullName: 'Ahmad Khaled',
+        dateOfBirth: new Date('2012-05-10'),
+        gender: Gender.MALE,
+        status: StudentStatus.ACTIVE,
+        nationalNumber: '5555555555',
+        mainLanguage: 'Arabic',
+        guardianId: guardian.id,
+        schoolId: school.id,
+        locationId: location.id,
+      },
+    });
+    console.log('✅ Student created');
+  } else {
+    student = existingStudent;
+    console.log('ℹ️ Student already exists');
+  }
 
   // ========== 6️⃣ إنشاء هدف تبرع ==========
   const purpose = await prisma.donationPurpose.create({
