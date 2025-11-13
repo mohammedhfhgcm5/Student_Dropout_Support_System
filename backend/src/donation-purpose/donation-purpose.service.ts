@@ -1,8 +1,7 @@
-// src/donation-purpose/donation-purpose.service.ts
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "prisma/prisma.service";
-import { CreateDonationPurposeDto } from "./dto/create-donation-purpose.dto";
-import { UpdateDonationPurposeDto } from "./dto/update-donation-purpose.dto";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'prisma/prisma.service';
+import { CreateDonationPurposeDto } from './dto/create-donation-purpose.dto';
+import { UpdateDonationPurposeDto } from './dto/update-donation-purpose.dto';
 
 @Injectable()
 export class DonationPurposeService {
@@ -40,10 +39,26 @@ export class DonationPurposeService {
     return this.prisma.donationPurpose.delete({ where: { id } });
   }
 
+  /**
+   * 🔍 Advanced but simple search:
+   * Searches by any part of a letter, word, or sentence.
+   * Matches in name, description, or category (case-insensitive).
+   */
   async search(query: string, skip = 0, limit = 10) {
+    if (!query || query.trim() === '') {
+      return this.prisma.donationPurpose.findMany({
+        include: { donations: true },
+        skip,
+        take: limit,
+      });
+    }
+
     return this.prisma.donationPurpose.findMany({
       where: {
-        name: { contains: query, mode: "insensitive" },
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+        ],
       },
       include: { donations: true },
       skip,
