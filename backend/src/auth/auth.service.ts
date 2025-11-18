@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthDto, ForgotPasswordDto, PayloadDto } from './dto/auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
@@ -143,31 +140,27 @@ export class AuthService {
      🔹 6. تسجيل متبرع جديد + إرسال تحقق بالبريد
   ======================================================= */
   async DonorsignUp(signupBody: CreateDonorDto) {
-    if (!signupBody.passwordHash)
+    if (!signupBody.password)
       throw new UnauthorizedException('Password is required');
 
-    const { passwordHash, email, ...rest } = signupBody;
+    const { password, email, ...rest } = signupBody;
 
     const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(passwordHash, salt);
+    const hashPassword = await bcrypt.hash(password, salt);
 
     const newDonor = await this.donerservice.create({
       ...rest,
       email,
-      passwordHash: hashPassword,
+      password: hashPassword, // ✅ لأن create() سيحولها إلى passwordHash
       verified: false,
     });
 
-    // إنشاء رمز التحقق (JWT)
     const token = this.jwtService.sign(
       { email },
       { secret: process.env.JWT_VERIFICATION_SECRET, expiresIn: '1d' },
     );
 
-    // حفظ رمز التحقق في قاعدة البيانات
     await this.donerservice.update(newDonor.id, { verificationToken: token });
-
-    // إرسال البريد الإلكتروني
     await this.sendVerificationEmail(email, token);
 
     return {

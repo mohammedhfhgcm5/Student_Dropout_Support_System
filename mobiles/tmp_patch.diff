@@ -1,0 +1,12 @@
+*** Begin Patch
+*** Update File: contexts/LanguageContext.tsx
+@@
+   searchStudentsPlaceholder: {
+     en: "Search by name or national number...",
+     ar: "ابحث بالاسم أو الرقم القومي...",
+   },
++  loadingStudents: { en: "Loading students...", ar: "جارٍ تحميل الطلاب..." },
++  failedToLoadStudents: { en: "Failed to load students", ar: "فشل تحميل الطلاب" },
++  retry: { en: "Retry", ar: "إعادة المحاولة" },
++  noStudentsFound: { en: "No students found", ar: "لا يوجد طلاب" },
+*** End Patch

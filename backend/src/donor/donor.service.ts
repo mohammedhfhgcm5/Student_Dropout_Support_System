@@ -1,15 +1,21 @@
 // src/donor/donor.service.ts
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "prisma/prisma.service";
-import { CreateDonorDto } from "./dto/create-donor.dto";
-import { UpdateDonorDto } from "./dto/update-donor.dto";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'prisma/prisma.service';
+import { CreateDonorDto } from './dto/create-donor.dto';
+import { UpdateDonorDto } from './dto/update-donor.dto';
 
 @Injectable()
 export class DonorService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateDonorDto) {
-    return this.prisma.donor.create({ data: dto });
+    const { password, ...rest } = dto;
+    return this.prisma.donor.create({
+      data: {
+        ...rest,
+        passwordHash: password, // ✅ نحفظه مؤقتًا هنا (أو بعد تشفيره في auth.service)
+      },
+    });
   }
 
   async findAll() {
@@ -39,10 +45,33 @@ export class DonorService {
     return donor;
   }
 
+  // Return all donations made by a specific donor
+  async donationsByDonor(donorId: number) {
+    return this.prisma.donation.findMany({
+      where: { donorId },
+      include: { student: true, purpose: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // Return only the national number for a donor
+  async getNationalNumber(donorId: number) {
+    const donor = await this.prisma.donor.findUnique({
+      where: { id: donorId },
+      select: { nationalNumber: true },
+    });
+    if (!donor) {
+      throw new NotFoundException(`Donor with ID ${donorId} not found`);
+    }
+    return donor; // { nationalNumber: string }
+  }
+
   async update(id: number, dto: UpdateDonorDto) {
+    // Prevent changing nationalNumber (read-only)
+    const { nationalNumber, ...data } = (dto as any) || {};
     return this.prisma.donor.update({
       where: { id },
-      data: dto,
+      data,
     });
   }
 
@@ -54,9 +83,9 @@ export class DonorService {
     return this.prisma.donor.findMany({
       where: {
         OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { email: { contains: query, mode: "insensitive" } },
-          { nationalNumber: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+          { nationalNumber: { contains: query, mode: 'insensitive' } },
         ],
       },
       include: { donations: true },
